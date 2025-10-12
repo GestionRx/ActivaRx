@@ -1,0 +1,347 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Min SERAM — Conteo de minutos</title>
+
+  <meta name="theme-color" content="#F28C28" />
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Min SERAM" />
+  <link rel="apple-touch-icon" id="apple-touch-icon">
+  <link rel="icon" id="favicon">
+
+  <style>
+    :root{
+      --bg:#0f1220; --card:#171a2b; --ink:#e9ecf1; --muted:#9aa1b3; --accent:#6ea8fe;
+      --danger:#ff6b6b; --ok:#3ecf8e; --border:#232840;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,"Helvetica Neue",Arial;
+      color:var(--ink); background:linear-gradient(160deg,#0e1020,#111429 35%,#0b1026);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    header{
+      padding:20px 24px; border-bottom:1px solid var(--border);
+      position:sticky; top:0; backdrop-filter:saturate(140%) blur(10px); background:#0f1220cc; z-index: 10;
+    }
+    header h1{margin:0 0 4px; font-size:20px; letter-spacing:.2px}
+    header p{margin:0; color:var(--muted); font-size:14px}
+    .wrap{display:grid; grid-template-columns: 1.1fr .9fr; gap:18px; padding:18px; max-width:1100px; margin:0 auto}
+    @media (max-width:980px){ .wrap{grid-template-columns:1fr} }
+
+    .card{
+      background:var(--card); border:1px solid var(--border); border-radius:14px;
+      padding:14px 14px 10px; box-shadow:0 6px 20px rgba(0,0,0,.25);
+    }
+    .section{margin-bottom:10px}
+    .section h2{
+      margin:10px 6px; font-size:15px; font-weight:700; color:#d8def2; text-transform:uppercase; letter-spacing:.6px
+    }
+    .grid{
+      display:grid; gap:8px; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+      padding:6px;
+    }
+    button.item{
+      all:unset; display:flex; align-items:center; justify-content:space-between;
+      padding:12px 12px; border:1px solid var(--border); border-radius:10px;
+      background:#13182b; color:var(--ink); cursor:pointer; transition:.15s ease; text-align: left;
+    }
+    button.item:hover{transform:translateY(-1px); border-color:#2a335a; background:#141b34}
+    .item .name{font-size:14px; line-height:1.25; margin-right:10px}
+    .item .mins{font-size:13px; color:#cbd4ff; background:#1a2244; padding:4px 8px; border-radius:8px}
+
+    .totals{
+      display:flex; align-items:center; justify-content:space-between; padding:10px 12px;
+      border:1px dashed #2a3152; border-radius:10px; background:#121734; margin:8px 0 12px;
+      flex-wrap: wrap;
+    }
+    .totals .sum{ font-weight:800; font-size:18px; color:#f0f3ff; transition:color .2s ease; }
+    .totals .sum.ok{ color: var(--ok); }
+    .totals .hint{ color: var(--muted); font-size:13px }
+
+    .log{margin-top:6px; max-height:62vh; overflow:auto; padding-right:4px}
+    .row{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px; padding:10px 12px; background:#13172c; border:1px solid #22284a;
+      border-radius:10px; margin:8px 0;
+    }
+    .row .label{font-size:14px}
+    .row .pill{font-size:12px; color:#cfe1ff; background:#1a2244; padding:3px 8px; border-radius:999px}
+    .del{
+      all:unset; cursor:pointer; color:#ff9aa9; background:#2a1520; border:1px solid #462033;
+      padding:4px 8px; border-radius:8px; font-weight:700; line-height:1; transition:all .12s ease;
+    }
+    .del:hover{ background:#3a1d2d; color:#ffd2da }
+    .toolbar{display:flex; gap:8px; margin:8px 0 4px; align-items:center}
+    .clear{
+      all:unset; cursor:pointer; color:#d2dcff; background:#232a4a; border:1px solid #2f3a6b;
+      padding:8px 10px; border-radius:10px; font-size:13px;
+    }
+    .clear:hover{background:#283159}
+    .count{color:var(--muted); font-size:13px; margin-left:auto; align-self:center}
+    .footer-note{color:var(--muted); font-size:12px; padding:4px 8px 0}
+
+    .manual-entry {
+      background: #121734; padding: 12px; border-radius: 10px; border: 1px dashed #2a3152;
+      margin-bottom: 20px;
+    }
+    .manual-entry h2 { margin-top: 0; font-size:15px }
+    .manual-form { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+    .manual-form input {
+      background: #13182b; border: 1px solid var(--border); color: var(--ink);
+      border-radius: 8px; padding: 10px; font-size: 14px; height: 40px;
+    }
+    .manual-form input::placeholder { color: var(--muted); }
+    .manual-form input[type="number"] { width: 80px; }
+    .manual-form button {
+      all: unset; background: var(--accent); color: #0f1220; font-weight: 700;
+      border-radius: 8px; cursor: pointer; transition: .2s ease;
+      display: inline-flex; align-items: center; justify-content: center; height:40px;
+      grid-column: 1 / 3;
+    }
+    .manual-form button:hover { background: #8ec0ff; }
+
+    /* Barra de progreso con estilos globales */
+    .progress-bar-container {
+      width: 100%; background-color: #13182b; border-radius: 999px;
+      height: 8px; overflow: hidden; border: 1px solid #3c487c;
+    }
+    .progress-bar {
+      height: 100%; width: 0%; background-color: var(--ok);
+      border-radius: 999px; transition: width 0.4s ease;
+    }
+    .totals .progress-bar-container { margin-top: 12px; }
+
+    /* --- NUEVO: ESTILOS DEL PANEL DE SUGERENCIAS --- */
+    #left-column { display: flex; flex-direction: column; gap: 18px; }
+    #sugerencias-panel h2 {
+      margin: 0 0 10px; font-size:15px; font-weight:700;
+      color:#d8def2; text-transform:uppercase; letter-spacing:.6px
+    }
+    #sugerencias-content { color: var(--muted); font-size: 14px; }
+    .suggestion-item {
+      display: flex; justify-content: space-between; align-items:center; padding: 9px 6px;
+      border-bottom: 1px solid var(--border); text-transform: lowercase;
+    }
+    .suggestion-item:last-of-type { border-bottom: none; }
+    .suggestion-item .name { color: var(--ink); }
+    .suggestion-item .mins { font-weight: 700; color: var(--accent); }
+    .suggestion-hint { font-style: italic; font-size: 13px; padding: 6px; }
+    .suggestion-total { text-align:right; font-size:12px; padding-top:8px; color: var(--muted); }
+
+
+    #floating-bar { display:none; }
+    @media (max-width:980px) { #left-column { gap: 14px; } }
+    @media (max-width:768px) {
+      #floating-bar {
+        position: fixed; bottom: 0; left: 0; width: 100%;
+        background: linear-gradient(180deg, rgba(44,53,88,0.95), rgba(27,34,64,0.95));
+        border-top: 2px solid var(--border); z-index: 1000; padding: 10px 12px 12px;
+        box-shadow: 0 -10px 30px rgba(2,6,23,0.6);
+      }
+      .floating-content {
+        display: flex; justify-content: center; font-size: 16px;
+        font-weight: bold; color: var(--ink); margin-bottom: 8px;
+      }
+    }
+
+    .blink { animation: blink 0.8s infinite; }
+    @keyframes blink { 50% { opacity: 0.2; } }
+
+    /* OPTIMIZACIÓN MÓVIL */
+    @media (max-width: 768px) {
+      .wrap { display: block; padding: 12px; }
+      header { padding: 14px 16px; }
+      header h1 { font-size: 18px; }
+      header p { font-size: 13px; }
+      .card { padding: 12px; margin-bottom: 14px; border-radius:12px }
+      .grid { grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:6px; }
+      button.item { padding: 10px; font-size: 14px; border-radius:8px }
+      .manual-form { display: flex; flex-direction: column; gap: 8px; }
+      .manual-form > * {
+  width: 100% !important; 
+  grid-column: unset !important;
+} 
+      .totals .sum { font-size:16px; }
+      .totals .hint { font-size:12px; }
+      .toolbar { flex-wrap: wrap; }
+      .clear { font-size:12px; padding:6px 8px; }
+    }
+    @media (max-width: 480px) {
+      .grid { grid-template-columns: 1fr; }
+      .row { flex-direction: column; align-items: flex-start; gap:6px; padding:10px }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Minutos SERAM — Registro de estudios</h1>
+    <p>Pulsa un ítem para añadirlo al log. Pulsa <strong>X</strong> para borrar una entrada.</p>
+  </header>
+
+  <main class="wrap" id="app-root">
+    <div id="left-column">
+      <section class="card" id="catalogo">
+        <div class="manual-entry">
+          <h2>Entrada Manual</h2>
+          <form class="manual-form" id="manualForm" autocomplete="off">
+            <input type="text" id="manualName" placeholder="Nombre del estudio" required>
+            <input type="number" id="manualMins" placeholder="Min" min="1" required>
+            <button type="submit" aria-label="Añadir estudio">Añadir</button>
+          </form>
+        </div>
+        <div class="section">
+          <h2>Tomografía Computarizada</h2>
+          <div class="grid" id="tc"></div>
+        </div>
+        <div class="section">
+          <h2>Resonancia Magnética</h2>
+          <div class="grid" id="rm"></div>
+        </div>
+        <div class="section">
+          <h2>Ecografía</h2>
+          <div class="grid" id="eco"></div>
+        </div>
+      </section>
+
+      <section class="card" id="sugerencias-panel">
+        <h2>Sugerencias</h2>
+        <div id="sugerencias-content"></div>
+      </section>
+    </div>
+
+    <section class="card" id="panel-log">
+      <div class="totals" id="totalsPanel">
+        <div style="flex: 1;">
+          <div class="hint">Total acumulado</div>
+          <div id="sum" class="sum">0 min</div>
+        </div>
+        <div class="toolbar">
+          <button class="clear" id="btnReset" title="Vaciar registro">Vaciar</button>
+          <div class="count"><span id="nEntradas">0</span> entradas</div>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar"></div>
+        </div>
+      </div>
+      <div class="log" id="log" aria-live="polite"></div>
+      <div class="footer-note">Objetivo: 300 min</div>
+    </section>
+  </main>
+
+  <div id="floating-bar" role="status" aria-live="polite">
+    <div class="floating-content"></div>
+    <div class="progress-bar-container"><div class="progress-bar"></div></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" defer></script>
+  
+<script>
+  (function setupPWAAndIcons(){ 
+    const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'><rect width='100%' height='100%' rx='40' ry='40' fill='#F28C28'/><text x='50%' y='52%' dominant-baseline='middle' text-anchor='middle' fill='#ffffff' font-family='system-ui, -apple-system, "Segoe UI", Roboto, Arial' font-weight='700' font-size='190'>Rx</text></svg>`;
+    const svgDataUrl='data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+    document.getElementById('favicon').setAttribute('href',svgDataUrl);
+    document.getElementById('apple-touch-icon').setAttribute('href',svgDataUrl);
+    const manifest={name:"Min SERAM",short_name:"Min SERAM",description:"Conteo de minutos por estudio — Min SERAM",start_url:".",display:"standalone",background_color:"#0f1220",theme_color:"#F28C28",icons:[{src:svgDataUrl,sizes:"192x192",type:"image/svg+xml"},{src:svgDataUrl,sizes:"512x512",type:"image/svg+xml"}]};
+    const manifestURL=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/json'}));
+    const relLink=document.createElement('link');
+    relLink.rel='manifest';relLink.href=manifestURL;
+    document.head.appendChild(relLink);
+    if('serviceWorker' in navigator){const swCode=`const CACHE_NAME = 'min-seram-v1';self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['./']))) });self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))) });`;const swURL=URL.createObjectURL(new Blob([swCode],{type:'application/javascript'}));navigator.serviceWorker.register(swURL).catch(err=>console.warn('SW registration failed:',err));}
+  })();
+  </script>
+
+  <script>
+  (function(){
+    const DATA={tc:[["TC CRÁNEO",15],["TC ICTUS CON ANGIO-TC",30],["TC ICTUS CON ANGIO-TC Y PERFUSIÓN",35],["TC DE ÓRBITA/FACIAL/SENOS",15],["TC DE MANDÍBULAS/DENTAL",20],["TC DE PEÑASCO, MASTOIDES Y CAIS",20],["TC DE CUELLO SIN CONTRASTE",15],["TC DE CUELLO CON CONTRASTE",25],["TC TSA/ARTERIAS/VENAS CEREBRALES",30],["TC DE COLUMNA CERVICAL/DORSAL/LUMBAR SIN CONTRASTE",20],["TC TÓRAX",20],["TC TÓRACO-ABDOMINO-PÉLVICO CON CONTRASTE",35]],rm:[["RM DE CRÁNEO SIN CONTRASTE / NEURONAVEGADOR",20],["RM DE CRÁNEO SIN/CON CONTRASTE",25],["RM ANGIOGRAFÍA CEREBRAL SIN CONTRASTE",20],["RM ANGIORM VENOSA CEREBRAL",30],["RM CEREBRO Y ANGIO RM",35],["RM CEREBRAL CON ESTUDIO DE PERFUSIÓN",30],["RM CEREBRAL CON ESPECTROSCOPIA",40],["RM ANGIOGRAFÍA DE TSA CON CONTRASTE",30],["RM ANGIOGRAFÍA CEREBRAL Y TSA",35],["RM DE HIPÓFISIS SIN/CON CONTRASTE",25],["RM DE BASE DE CRÁNEO (PEÑASCO) SIN/CON CONTRASTE",25],["RM DE CARA/SENOS/ÓRBITAS SIN/CON CONTRASTE",25],["RM DE CUELLO / CAVUM SIN/CON CONTRASTE",30],["RM DE PLEXO BRAQUIAL SIN/CON CONTRASTE",30],["RM DE COLUMNA CERVICAL/DORSAL/LUMBAR SIN CONTRASTE",20],["RM DE COLUMNA DOS SEGMENTOS SIN CONTRASTE",25],["RM DE COLUMNA TRES SEGMENTOS SIN CONTRASTE",30],["RM DE COLUMNA CERVICAL/DORSAL/LUMBAR SIN/CON CONTRASTE",25],["RM DE COLUMNA DOS SEGMENTOS SIN/CON CONTRASTE",30],["RM DE COLUMNA TRES SEGMENTOS SIN/CON CONTRASTE",35]],eco:[["DOPPLER TSA",30]]};
+    let logEntries=[];
+    const THRESHOLD=300;
+    let isTotalsPanelVisible=false;
+    const els={tc:document.getElementById('tc'),rm:document.getElementById('rm'),eco:document.getElementById('eco'),log:document.getElementById('log'),sum:document.getElementById('sum'),nEntradas:document.getElementById('nEntradas'),btnReset:document.getElementById('btnReset'),floating:document.getElementById('floating-bar'),floatingContent:document.querySelector('.floating-content'),progressBars:document.querySelectorAll('.progress-bar'),totalsPanel:document.getElementById('totalsPanel'),manualForm:document.getElementById('manualForm'),manualName:document.getElementById('manualName'),manualMins:document.getElementById('manualMins'),
+      sugerenciasContent: document.getElementById('sugerencias-content') // <<< NUEVO ELEMENTO
+    };
+    function saveState(){try{localStorage.setItem('studyLogData',JSON.stringify(logEntries));}catch(e){console.warn('No se pudo guardar',e);}}
+    function loadState(){try{const d=localStorage.getItem('studyLogData');if(d){logEntries=JSON.parse(d)||[];renderLog();updateTotals();}}catch(e){console.warn('Error cargando',e);}}
+    function makeButton(n,m){const b=document.createElement('button');b.className='item';b.type='button';b.innerHTML=`<span class="name">${n}</span><span class="mins">${m} min</span>`;b.addEventListener('click',()=>addEntry(n,m));return b;}
+    function renderLog(){els.log.innerHTML='';logEntries.forEach(e=>{const r=document.createElement('div');r.className='row';r.id=e.id;r.innerHTML=`<div class="label">${escapeHtml(e.name)}</div><div style="display:flex; gap:8px; align-items:center;"><span class="pill">${e.mins} min</span><button class="del" title="Borrar" aria-label="Borrar">X</button></div>`;r.querySelector('.del').addEventListener('click',()=>removeEntry(e.id));els.log.appendChild(r);});}
+    function addEntry(n,m){const e={id:`e_${Date.now()}_${Math.random()}`,name:n,mins:parseInt(m,10)};logEntries.unshift(e);renderLog();updateTotals();saveState();}
+    function removeEntry(id){logEntries=logEntries.filter(e=>e.id!==id);renderLog();updateTotals();saveState();}
+    function updateFloatingBarVisibility(){const m=window.innerWidth<=768;els.floating.style.display=(m&&logEntries.length>0&&!isTotalsPanelVisible)?'block':'none';}
+
+    // === NUEVA FUNCIÓN PARA LAS SUGERENCIAS ===
+    function updateSuggestions() {
+      const total = logEntries.reduce((s, e) => s + (e.mins || 0), 0);
+      let remaining = THRESHOLD - total;
+
+      if (remaining <= 0) {
+        els.sugerenciasContent.innerHTML = '<div class="suggestion-hint">¡Objetivo cumplido! 🎉</div>';
+        return;
+      }
+
+      const suggestionStudies = [
+        { name: 'tc cuello con contraste', mins: 25 },
+        { name: 'rm cráneo sin contraste / neuronavegador', mins: 20 },
+        { name: 'rm columna cervical/dorsal/lumbar sin contraste', mins: 20 },
+        { name: 'tc cráneo', mins: 15 },
+      ];
+
+      const suggestions = [];
+      let suggestedMins = 0;
+      let tempRemaining = remaining;
+
+      while (tempRemaining > 0) {
+        const bestFit = suggestionStudies.find(study => study.mins <= tempRemaining);
+        if (bestFit) {
+          suggestions.push(bestFit);
+          tempRemaining -= bestFit.mins;
+          suggestedMins += bestFit.mins;
+        } else { break; }
+      }
+
+      if (suggestions.length === 0) {
+        els.sugerenciasContent.innerHTML = `<div class="suggestion-hint">Necesitas ${remaining} min más para el objetivo.</div>`;
+        return;
+      }
+
+      const grouped = suggestions.reduce((acc, s) => { acc[s.name] = (acc[s.name] || 0) + 1; return acc; }, {});
+      let html = `<div class="suggestion-hint">Para llegar al objetivo, puedes añadir:</div>`;
+      html += Object.entries(grouped).map(([name, count]) => {
+          const study = suggestionStudies.find(s => s.name === name);
+          return `<div class="suggestion-item"><span class="name">${count > 1 ? `${count} &times; ` : ''}${name}</span><span class="mins">${count * study.mins} min</span></div>`;
+      }).join('');
+      html += `<div class="suggestion-total">Total sugerido: ${suggestedMins} min</div>`;
+      els.sugerenciasContent.innerHTML = html;
+    }
+
+    function updateTotals(){
+      const total=logEntries.reduce((s,e)=>s+(e.mins||0),0);
+      const count=logEntries.length;
+      const reached=total>=THRESHOLD;
+      els.nEntradas.textContent=count;
+      els.sum.textContent=reached?`${total} min 🎉`:`${total} min`;
+      els.sum.classList.toggle('ok',reached);els.sum.classList.toggle('blink',reached);
+      const barText=reached?`Total: ${total} min 🎉 · ${count} entradas`:`Total: ${total} min · ${count} entradas`;
+      els.floatingContent.innerHTML=reached?`<span class="blink">${barText}</span>`:barText;
+      els.floatingContent.style.color=reached?'var(--ok)':'var(--ink)';
+      const progress=Math.min((total/THRESHOLD)*100,100);
+      els.progressBars.forEach(b=>{b.style.width=`${progress}%`;});
+      updateFloatingBarVisibility();
+      updateSuggestions(); // <<< LLAMADA A LA NUEVA FUNCIÓN
+      if(reached&&!els.sum.classList.contains('celebrado')){els.sum.classList.add('celebrado');try{confetti({particleCount:200,spread:70,origin:{y:0.6}});}catch(e){}}
+      if(!reached)els.sum.classList.remove('celebrado');
+    }
+
+    function escapeHtml(t){return String(t).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+    Object.entries(DATA).forEach(([id,arr])=>{const c=els[id];if(c)arr.forEach(([n,m])=>c.appendChild(makeButton(n,m)));});
+    els.btnReset.addEventListener('click',()=>{if(confirm('¿Vaciar todo el registro?')){logEntries=[];try{localStorage.removeItem('studyLogData');}catch(e){}renderLog();updateTotals();}});
+    els.manualForm.addEventListener('submit',e=>{e.preventDefault();const n=els.manualName.value.trim();const m=parseInt(els.manualMins.value,10);if(n&&m>0){addEntry(n,m);els.manualName.value='';els.manualMins.value='';els.manualName.focus();}});
+    const observer=new IntersectionObserver(e=>{e.forEach(en=>{isTotalsPanelVisible=en.isIntersecting;updateFloatingBarVisibility();});},{threshold:0.1});observer.observe(els.totalsPanel);
+    window.addEventListener('resize',updateFloatingBarVisibility);document.addEventListener('DOMContentLoaded',loadState);
+  })();
+  </script>
+</body>
+</html>
