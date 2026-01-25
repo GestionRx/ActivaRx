@@ -1,6 +1,7 @@
 # ActivaRx
 
 Desarrollo de una Aplicación Web Progresiva para el Registro y Análisis de la Actividad en Radiodiagnóstico mediante Programación Asistida por IA. 
+
 La finalidad de la aplicación es académica y se presentará en el 38º Congreso de la SERAM. 
 
 Todos los derechos reservados. 
